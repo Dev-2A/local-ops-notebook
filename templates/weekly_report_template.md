@@ -1,0 +1,17 @@
+# Weekly Ops Report ({week_range})  
+
+Generated: {generated_at}  
+
+## 1) This week changed files  
+{changed_files_block}  
+
+## 2) Auto digest (template-based)  
+{auto_digest_block}  
+
+## 3) RAG evidence (Top {rag_top_k})  
+{rag_evidence_block}  
+
+---  
+Notes:  
+- This report is generated automatically from `notes/` using fingerprints.  
+- Week 기준: Monday 00:00 ~ next Monday 00:00 (local time).  
