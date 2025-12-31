@@ -1,0 +1,10 @@
+notes_dir: notes
+reports_dir: reports
+template_path: templates/weekly_report_template.md
+state_path: .ops_state/fingerprints.json
+
+rag:
+  enabled: true
+  url: http://127.0.0.1:8000/query
+  top_k: 3
+  query: ""

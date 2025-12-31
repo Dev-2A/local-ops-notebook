@@ -14,12 +14,7 @@ if not exist dist\local-ops-notebook.exe (
   exit /b 1
 )
 
-REM exe runs from repo root so relative paths work.
-dist\local-ops-notebook.exe ^
-  --notes notes ^
-  --template templates\weekly_report_template.md ^
-  --reports-dir reports ^
-  --state .ops_state\fingerprints.json >> "%LOG_FILE%" 2>&1
+dist\local-ops-notebook.exe --config config.yaml >> "%LOG_FILE%" 2>&1
 
 if errorlevel 1 (
   echo [ERROR] EXE report generation failed. >> "%LOG_FILE%"

@@ -59,4 +59,18 @@ set USE_RAG=1
 set RAG_URL=http://127.0.0.1:8000/query
 set RAG_TOP_K=3
 run.cmd
+```  
+
+## Configuration (config.yaml)  
+
+Default run uses `config.yaml`.  
+
+- Enable RAG:
+  - set `rag.enabled: true` in `config.yaml`, or
+  - set env `USE_RAG=1` (overrides config)  
+
+Override examples:
+```cmd
+python -m ops_notebook --config config.yaml --use-rag
+python -m ops_notebook --config config.yaml --rag-top-k 5
 ```
