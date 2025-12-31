@@ -11,6 +11,7 @@ from .state import StateStore
 from .weekly import current_week_window_local, parse_iso_maybe
 from .rag_client import RagClient, RagEvidence
 from .snapshots import SnapshotStore
+from .rag_cache import RagCache
 
 
 MAX_DIFF_LINES = 160
@@ -215,21 +216,56 @@ def generate_weekly_report(
     diff_block = _format_diff_block(this_week_candidates, notes_dir, snapshots)
     auto_digest_block = _format_auto_digest_block(this_week_candidates, notes_dir)
     
-    evidences = None
+    rag_per_file_block = "- (RAG disabled)\n"
     if use_rag:
         client = RagClient(rag_url=rag_url, timeout_s=12)
-        query = rag_query if rag_query else _default_rag_query(this_week_candidates, notes_dir)
-        if verbose:
-            print(f"[INFO] RAG query: {query}")
-        try:
-            evidences = client.query_topk(query=query, top_k=rag_top_k)
-        except Exception as e:
-            # don't fail the whole report
-            evidences = []
-            if verbose:
-                print(f"[WARN] RAG failed: {e}")
-    
-    rag_block = _format_rag_block(evidences, rag_top_k)
+        
+        cache_path = state_path.parent / "rag_cache.json"
+        rag_cache = RagCache(cache_path)
+        rag_cache.load()
+        
+        lines: List[str] = []
+        for it in this_week_candidates:
+            if it.status == "deleted" or it.abspath is None:
+                lines.append(f"### `{it.relpath}`")
+                lines.append("- (deleted)\n")
+                continue
+            
+            # query 구성: 제목 + 파일명 + preview
+            text = _read_text_safe(it.abspath)
+            title = _first_heading_or_filename(text, Path(it.relpath).name)
+            pv = _preview(text, limit=180)
+            q = f"{title}\n파일: {it.relpath}\n내용요약: {pv}\n관련 근거/관련 노트를 찾아줘"
+            
+            # 캐시 키: relpath + sha256 + url + topk + max_chars
+            sha = it.sha256 or ""
+            cached = rag_cache.get(it.relpath, sha, rag_url, rag_top_k, MAX_RAG_SNIPPET_CHARS)
+            
+            lines.append(f"### `{it.relpath}`")
+            if cached is not None:
+                evs = cached
+            else:
+                try:
+                    evs = client.query_topk(query=q, top_k=rag_top_k, max_chars=MAX_RAG_SNIPPET_CHARS)
+                except Exception:
+                    evs = []
+                rag_cache.set(it.relpath, sha, rag_url, rag_top_k, MAX_RAG_SNIPPET_CHARS, evs)
+            
+            if not evs:
+                lines.append("- (no evidence)\n")
+                continue
+            
+            for i, ev in enumerate(evs, start=1):
+                snippet = (ev.snippet or "").strip().replace("\n", " ")
+                if len(snippet) > MAX_RAG_SNIPPET_CHARS:
+                    snippet = snippet[:MAX_RAG_SNIPPET_CHARS].rstrip() + "..."
+                src = f" — source: {ev.source}" if ev.source else ""
+                score = f"  (score={ev.score:.4f})" if ev.score is not None else ""
+                lines.append(f"- Top{i}{score}{src}")
+            lines.append("")
+        
+        rag_cache.save()
+        rag_per_file_block = "\n".join(lines).rstrip() + "\n"
     
     template = template_path.read_text(encoding="utf-8")
     out = template.format(
@@ -240,7 +276,7 @@ def generate_weekly_report(
         diff_block=diff_block,
         auto_digest_block=auto_digest_block,
         rag_top_k=rag_top_k,
-        rag_evidence_block=rag_block,
+        rag_per_file_block=rag_per_file_block,
     )
     
     final_report_path.parent.mkdir(parents=True, exist_ok=True)

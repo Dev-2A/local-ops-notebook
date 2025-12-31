@@ -3,6 +3,15 @@ All notable changes to this project will be documented in this file.
 
 The format is based on Keep a Changelog, and this project follows Semantic Versioning.  
 
+## [0.3.0] - 2025-12-31
+### Added
+- Per-file RAG evidence (Top-K) for this week changed notes
+- RAG cache to avoid repeated calls (`.ops_state/rag_cache.json`)
+- local-rag-kit `/query` compatible parsing (`chunks` + `doc` + `text`)
+
+### Changed
+- RAG section in report switched from global Top-K to per-file Top-K  
+
 ## [0.2.3] - 2025-12-31
 ### Added
 - One-file Windows EXE build via PyInstaller (`build_exe.cmd`)
