@@ -1,18 +1,17 @@
 from __future__ import annotations
 
+import difflib
 from datetime import datetime
 from pathlib import Path
 from typing import List, Optional
-import difflib
 
 from .constants import MAX_PREVIEW_CHARS, MAX_RAG_SNIPPET_CHARS
+from .rag_cache import RagCache
+from .rag_client import RagClient, RagEvidence
 from .scanner import ScanItem, scan
+from .snapshots import SnapshotStore
 from .state import StateStore
 from .weekly import current_week_window_local, parse_iso_maybe
-from .rag_client import RagClient, RagEvidence
-from .snapshots import SnapshotStore
-from .rag_cache import RagCache
-
 
 MAX_DIFF_LINES = 160
 

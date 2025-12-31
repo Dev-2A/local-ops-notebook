@@ -3,6 +3,14 @@ All notable changes to this project will be documented in this file.
 
 The format is based on Keep a Changelog, and this project follows Semantic Versioning.  
 
+## [0.3.2] - 2025-12-31
+### Added
+- GitHub Actions release workflow: builds Windows onefile EXE via PyInstaller on tag push (`v*`)
+- Uploads the built EXE to GitHub Release automatically
+
+### Changed
+- Version bumped to 0.3.2  
+
 ## [0.3.1] - 2025-12-31
 ### Added
 - `config.yaml` support (YAML) to centralize settings.

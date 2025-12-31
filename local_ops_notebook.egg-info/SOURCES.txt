@@ -1,0 +1,12 @@
+LICENSE
+README.md
+pyproject.toml
+local_ops_notebook.egg-info/PKG-INFO
+local_ops_notebook.egg-info/SOURCES.txt
+local_ops_notebook.egg-info/dependency_links.txt
+local_ops_notebook.egg-info/requires.txt
+local_ops_notebook.egg-info/top_level.txt
+ops_notebook/__init__.py
+ops_notebook/__main__.py
+ops_notebook/cli.py
+tests/test_report_generation.py

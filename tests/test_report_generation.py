@@ -1,5 +1,4 @@
 from pathlib import Path
-import shutil
 
 from ops_notebook.core.report import generate_weekly_report
 
@@ -25,8 +24,9 @@ def test_generate_weekly_report(tmp_path: Path):
         "## 1) This week changed files\n{changed_files_block}\n"
         "## 2) File diffs (unified diff)\n{diff_block}\n"
         "## 3) Auto digest (template-based)\n{auto_digest_block}\n"
-        "## 4) RAG evidence (Top {rag_top_k})\n{rag_evidence_block}\n"
+        "## 4) RAG evidence per changed file (Top {rag_top_k})\n{rag_per_file_block}\n"
     )
+
     (template_dir / "weekly_report_template.md").write_text(template, encoding="utf-8")
     
     # Act
