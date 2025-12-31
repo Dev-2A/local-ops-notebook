@@ -2,4 +2,5 @@
 __pycache__/
 *.pyc
 .ops_state/
+logs/
 .DS_Store

@@ -16,6 +16,25 @@ run.cmd
 - Reports are written to: `reports/`
 - Local state is stored in: `.ops_state/` (fingerprints + snapshots)
 
+## Weekly Auto Run (Windows Task Scheduler)  
+Install:  
+```cmd
+schedule_install.cmd
+```  
+
+Test run immediately:  
+```cmd
+schtasks /Run /TN "LocalOptNotebook Weekly Report"
+```
+
+Logs:
+- `logs/scheduled_YYYYMMDD_HHMMSS.log`
+
+Uninstall:
+```cmd
+schedule_uninstall.cmd
+```
+
 ## Optional RAG
 ```cmd
 set USE_RAG=1
