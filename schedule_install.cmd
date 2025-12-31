@@ -4,9 +4,8 @@ setlocal
 cd /d %~dp0
 
 set TASK_NAME=LocalOpsNotebook Weekly Report
-set RUN_SCRIPT=%CD%\scheduled_run.cmd
+set RUN_SCRIPT=%CD%\scheduled_run_exe.cmd
 
-REM You can change time here:
 set START_TIME=09:10
 
 echo [INFO] Installing scheduled task:
@@ -30,7 +29,7 @@ if errorlevel 1 (
 )
 
 echo.
-echo [OK] Task installed.
+echo [OK] Task installed (EXE runner).
 echo      Test run: schtasks /Run /TN "%TASK_NAME%"
 echo      Check logs under: logs\
 echo.
