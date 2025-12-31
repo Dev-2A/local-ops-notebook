@@ -30,7 +30,7 @@ REM   set RAG_URL=http://127.0.0.1:8000/query
 REM   set RAG_TOP_K=3
 
 echo [RUN] Generating weekly report...
-python -m ops_notebook --notes notes --report weekly_report.md --template templates\weekly_report_template.md
+python -m ops_notebook --notes notes --template templates\weekly_report_template.md --reports-dir reports
 
 if errorlevel 1 (
   echo [ERROR] Report generation failed.
@@ -38,7 +38,7 @@ if errorlevel 1 (
 )
 
 echo.
-echo [DONE] weekly_report.md generated.
+echo [DONE] Report generated under reports\ (YYYY-Www.md)
 echo        (Tip) If you want RAG evidence: set USE_RAG=1 then run again.
 echo.
 pause

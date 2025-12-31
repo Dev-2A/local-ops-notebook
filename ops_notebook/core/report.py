@@ -2,13 +2,18 @@ from __future__ import annotations
 
 from datetime import datetime
 from pathlib import Path
-from typing import List
+from typing import List, Optional
+import difflib
 
 from .constants import MAX_PREVIEW_CHARS, MAX_RAG_SNIPPET_CHARS
 from .scanner import ScanItem, scan
 from .state import StateStore
 from .weekly import current_week_window_local, parse_iso_maybe
 from .rag_client import RagClient, RagEvidence
+from .snapshots import SnapshotStore
+
+
+MAX_DIFF_LINES = 160
 
 
 def _read_text_safe(path: Path) -> str:
@@ -34,7 +39,7 @@ def _preview(text: str, limit: int = MAX_PREVIEW_CHARS) -> str:
     return t[:limit].rstrip() + "..."
 
 
-def _format_changed_files_block(items: List[ScanItem], only_this_week: bool = True) -> str:
+def _format_changed_files_block(items: List[ScanItem]) -> str:
     if not items:
         return "- (none)\n"
     lines = []
@@ -47,6 +52,53 @@ def _format_changed_files_block(items: List[ScanItem], only_this_week: bool = Tr
         }.get(it.status, it.status)
         lines.append(f"- {badge}: `{it.relpath}`")
     return "\n".join(lines) + "\n"
+
+
+def _unified_diff_text(old_text: str, new_text: str, relpath: str) -> str:
+    old_lines = old_text.splitlines()
+    new_lines = new_text.splitlines()
+    diff_iter = difflib.unified_diff(
+        old_lines,
+        new_lines,
+        fromfile=f"a/{relpath}",
+        tofile=f"b/{relpath}",
+        lineterm="",
+    )
+    diff_lines = list(diff_iter)
+    if not diff_lines:
+        return "(no diff)"
+    
+    if len(diff_lines) > MAX_DIFF_LINES:
+        diff_lines = diff_lines[:MAX_DIFF_LINES] + ["...(diff truncated)"]
+    return "\n".join(diff_lines)
+
+
+def _format_diff_block(items: List[ScanItem], notes_dir: Path, snapshots: SnapshotStore) -> str:
+    if not items:
+        return "- (none)\n"
+    
+    lines: List[str] = []
+    for it in items:
+        lines.append(f"### `{it.relpath}` ({it.status})")
+        
+        if it.status == "deleted" or it.abspath is None:
+            lines.append("")
+            lines.append("> deleted")
+            lines.append("")
+            continue
+        
+        new_text = _read_text_safe(it.abspath)
+        old_text = snapshots.load_text(it.relpath) or ""
+        
+        diff_text = _unified_diff_text(old_text, new_text, it.relpath)
+        
+        lines.append("")
+        lines.append("```diff")
+        lines.append(diff_text)
+        lines.append("```")
+        lines.append("")
+    
+    return "\n".join(lines).rstrip() + "\n"
 
 
 def _format_auto_digest_block(items: List[ScanItem], notes_dir: Path) -> str:
@@ -87,7 +139,7 @@ def _default_rag_query(changed_items: List[ScanItem], notes_dir: Path) -> str:
     return f"이번 주 변경된 노트({joined})와 관련된 근거/관련 노트를 찾아줘"
 
 
-def _format_rag_block(evidences: List[RagEvidence] | None, top_k: int) -> str:
+def _format_rag_block(evidences: Optional[List[RagEvidence]], top_k: int) -> str:
     if not evidences:
         return "- (RAG disabled or no evidence)\n"
     
@@ -104,9 +156,17 @@ def _format_rag_block(evidences: List[RagEvidence] | None, top_k: int) -> str:
     return "\n".join(lines) + "\n"
 
 
+def _auto_report_path(reports_dir: Path, week_start: datetime) -> Path:
+    iso = week_start.isocalendar() # (year, week, weekday)
+    y = iso.year
+    w = iso.week
+    return reports_dir / f"{y}-W{w:02d}.md"
+
+
 def generate_weekly_report(
     notes_dir: Path,
-    report_path: Path,
+    reports_dir: Path,
+    report_path: Optional[Path],
     template_path: Path,
     state_path: Path,
     use_rag: bool,
@@ -117,7 +177,7 @@ def generate_weekly_report(
 ) -> None:
     if verbose:
         print(f"[INFO] notes_dir={notes_dir}")
-        print(f"[INFO] report_path={report_path}")
+        print(f"[INFO] reports_dir={reports_dir}")
         print(f"[INFO] state_path={state_path}")
         print(f"[INFO] use_rag={use_rag} rag_url={rag_url} top_k={rag_top_k}")
     
@@ -129,6 +189,9 @@ def generate_weekly_report(
     
     # filter: changed/new/deleted that happened within current week window
     week = current_week_window_local()
+    week_range = f"{week.start.date().isoformat()} ~ {(week.end.date()).isoformat()} (Mon~Mon)"
+    generated_at = datetime.now().astimezone().isoformat(timespec="seconds")
+    
     this_week_candidates: List[ScanItem] = []
     for it in items:
         if it.status not in ("changed", "new", "deleted"):
@@ -139,10 +202,17 @@ def generate_weekly_report(
         if week.start <= dt < week.end:
             this_week_candidates.append(it)
     
-    week_range = f"{week.start.date().isoformat()} ~ {(week.end.date()).isoformat()} (Mon~Mon)"
-    generated_at = datetime.now().astimezone().isoformat(timespec="seconds")
+    # Output path
+    reports_dir.mkdir(parents=True, exist_ok=True)
+    final_report_path = report_path if report_path is not None else _auto_report_path(reports_dir, week.start)
     
+    # Snapshots (for diffs)
+    snapshots_root = state_path.parent / "snapshots"
+    snapshots = SnapshotStore(snapshots_root)
+    
+    # Build blocks
     changed_files_block = _format_changed_files_block(this_week_candidates)
+    diff_block = _format_diff_block(this_week_candidates, notes_dir, snapshots)
     auto_digest_block = _format_auto_digest_block(this_week_candidates, notes_dir)
     
     evidences = None
@@ -165,13 +235,27 @@ def generate_weekly_report(
     out = template.format(
         week_range=week_range,
         generated_at=generated_at,
+        report_file=final_report_path.as_posix(),
         changed_files_block=changed_files_block,
+        diff_block=diff_block,
         auto_digest_block=auto_digest_block,
         rag_top_k=rag_top_k,
         rag_evidence_block=rag_block,
     )
     
-    report_path.write_text(out, encoding="utf-8")
+    final_report_path.parent.mkdir(parents=True, exist_ok=True)
+    final_report_path.write_text(out, encoding="utf-8")
+    
+    # Update snapshots AFTER report generation (so diff uses previous snapshot)
+    for it in items:
+        if it.abspath is None or it.status == "deleted":
+            snapshots.delete(it.relpath)
+            continue
+        try:
+            snapshots.save_text(it.relpath, _read_text_safe(it.abspath))
+        except Exception:
+            # best effort
+            pass
     
     if verbose:
         print(f"[DONE] wrote: {report_path}")

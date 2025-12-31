@@ -2,5 +2,4 @@
 __pycache__/
 *.pyc
 .ops_state/
-weekly_report.md
 .DS_Store
