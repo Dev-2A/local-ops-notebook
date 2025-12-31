@@ -1,11 +1,10 @@
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import List
 
 from .constants import SUPPORTED_SUFFIXES, to_posix_relpath
 from .hashing import sha256_file
-from .state import FileState, StateStore
-from .state import _now_iso_local
+from .state import FileState, StateStore, _now_iso_local
 
 
 @dataclass

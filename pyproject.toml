@@ -1,10 +1,26 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "local-ops-notebook"
+version = "0.3.2"
+requires-python = ">=3.11"
+dependencies = [
+  "requests==2.32.3",
+  "PyYAML==6.0.2",
+]
+
+[tool.setuptools]
+packages = ["ops_notebook"]
+
 [tool.ruff]
 line-length = 100
 target-version = "py311"
 
 [tool.ruff.lint]
 select = ["E", "F", "I"]
-ignore = ["E501"]   # 긴 diff 라인 같은 것들은 현실적으로 생김
+ignore = ["E501"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

@@ -5,7 +5,6 @@ from typing import Any, Dict
 
 import yaml
 
-
 DEFAULT_CONFIG: Dict[str, Any] = {
     "notes_dir": "notes",
     "reports_dir": "reports",
