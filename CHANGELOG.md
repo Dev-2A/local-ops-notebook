@@ -3,6 +3,16 @@ All notable changes to this project will be documented in this file.
 
 The format is based on Keep a Changelog, and this project follows Semantic Versioning.  
 
+## [0.3.1] - 2025-12-31
+### Added
+- `config.yaml` support (YAML) to centralize settings.
+- `config.example.yaml` for quick setup.
+- Config loader with safe defaults (`ops_notebook/core/config.py`).
+
+### Changed
+- `run.cmd`, `scheduled_run.cmd`, and `scheduled_run_exe.cmd` now use `--config config.yaml` by default.
+- CLI keeps backward-compatible overrides via flags and env vars.  
+
 ## [0.3.0] - 2025-12-31
 ### Added
 - Per-file RAG evidence (Top-K) for this week changed notes

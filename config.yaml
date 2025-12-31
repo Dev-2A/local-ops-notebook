@@ -1,0 +1,14 @@
+notes_dir: notes
+reports_dir: reports
+template_path: templates/weekly_report_template.md
+state_path: .ops_state/fingerprints.json
+
+# Optional: if you want explicit output path (otherwise auto: reports/YYYY-Www.md)
+# report_path: ""
+
+rag:
+  enabled: false
+  url: http://127.0.0.1:8000/query
+  top_k: 3
+  # optional: fixed query (otherwise auto from each changed file)
+  query: ""
