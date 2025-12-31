@@ -18,9 +18,17 @@ def main() -> int:
         description="Local Ops Notebook - fingerprint change detection + weekly report",
     )
     parser.add_argument("--notes", default="notes", help="Notes folder (default: notes)")
-    parser.add_argument("--report", default="weekly_report.md", help="Output report path")
     parser.add_argument("--template", default="templates/weekly_report_template.md", help="Template path")
+    
+    parser.add_argument("--reports-dir", default="reports", help="Reports directory (default: reports)")
+    parser.add_argument(
+        "--report",
+        default="",
+        help="Output report path (optional). If empty, uses reports/YYYY-Www.md",
+    )
+    
     parser.add_argument("--state", default=".ops_state/fingerprints.json", help="State json path")
+    
     parser.add_argument("--use-rag", action="store_true", help="Enable RAG evidence (override USE_RAG env)")
     parser.add_argument("--rag-url", default=os.getenv("RAG_URL", "http://127.0.0.1:8000/query"), help="RAG server URL")
     parser.add_argument("--rag-top-k", type=int, default=int(os.getenv("RAG_TOP_K", "3")), help="RAG top-k")
@@ -32,15 +40,18 @@ def main() -> int:
     use_rag = args.use_rag or _env_bool("USE_RAG", False)
     
     notes_dir = Path(args.notes)
-    report_path = Path(args.report)
     template_path = Path(args.template)
     state_path = Path(args.state)
     
-    report_path.parent.mkdir(parents=True, exist_ok=True)
+    reports_dir = Path(args.reports_dir)
+    report_path = Path(args.report) if args.report.strip() else None
+    
+    reports_dir.mkdir(parents=True, exist_ok=True)
     state_path.parent.mkdir(parents=True, exist_ok=True)
     
     generate_weekly_report(
         notes_dir=notes_dir,
+        reports_dir=reports_dir,
         report_path=report_path,
         template_path=template_path,
         state_path=state_path,

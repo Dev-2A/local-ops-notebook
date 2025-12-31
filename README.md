@@ -3,13 +3,18 @@
 Windows MVP:
 - Scan `notes/` (.md/.txt)
 - Fingerprint change detection (changed/unchanged/new/deleted)
-- Generate `weekly_report.md` for this week (Mon-Sun)
+- Generate weekly report under `reports/YYYY-Www.md` (Mon~Mon, local time)
+- Includes unified diffs using snapshots
 - Optional: include Top3 evidence from local-rag-kit server
 
 ## Run
 ```cmd
 run.cmd
 ```
+
+## Output
+- Reports are written to: `reports/`
+- Local state is stored in: `.ops_state/` (fingerprints + snapshots)
 
 ## Optional RAG
 ```cmd
