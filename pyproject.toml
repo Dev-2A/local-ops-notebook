@@ -1,0 +1,10 @@
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]
+ignore = ["E501"]   # 긴 diff 라인 같은 것들은 현실적으로 생김
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

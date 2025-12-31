@@ -3,6 +3,15 @@ All notable changes to this project will be documented in this file.
 
 The format is based on Keep a Changelog, and this project follows Semantic Versioning.  
 
+## [0.2.2] - 2025-12-31  
+### Added  
+- GitHub Actions CI (Windows runner): ruff + pytest  
+- Dev dependencies (`dev-requirements.txt`)  
+- Minimal test for weekly report generation  
+
+### Changed  
+- Version bumped to 0.2.2  
+
 ## [0.2.1] - 2025-12-31  
 ### Added  
 - Windows Task Scheduler integration:  
