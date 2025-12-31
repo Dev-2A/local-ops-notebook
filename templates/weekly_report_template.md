@@ -1,6 +1,7 @@
 # Weekly Ops Report ({week_range})  
 
 Generated: {generated_at}  
+Report File: {report_file}  
 
 ## 1) This week changed files  
 {changed_files_block}  
@@ -11,8 +12,8 @@ Generated: {generated_at}
 ## 3) Auto digest (template-based)  
 {auto_digest_block}  
 
-## 4) RAG evidence (Top {rag_top_k})  
-{rag_evidence_block}  
+## 4) RAG evidence per changed file (Top {rag_top_k})  
+{rag_per_file_block}  
 
 ---  
 Notes:  

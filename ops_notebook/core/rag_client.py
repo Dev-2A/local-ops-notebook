@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional
+from typing import Any, List, Optional
 
 import requests
 
@@ -9,62 +9,44 @@ import requests
 @dataclass(frozen=True)
 class RagEvidence:
     snippet: str
-    source: Optional[str] = None
+    source: Optional[str] = None    # doc / file path
     score: Optional[float] = None
 
 
 class RagClient:
     """
-    Tries to be tolerant to unknown response formats.
-    Expected server: local-rag-kit like endpoint at /query
-    
-    We'll try:
-        POST { "query": "...", "top_k": 3 }
-        POST { "query": "...", "k": 3 }
-        GET  ?query=...&top_k=...
+    Compatible with local-rag-kit api_hybrid.py:
+      POST /query
+        { query, top_k, include_text, max_chars, ... }
+      Response:
+        { ..., chunks: [ {rank, score, doc, chunk_index, ..., text?}, ... ] }
     """
     
-    def __init__(self, rag_url: str, timeout_s: int = 10):
+    def __init__(self, rag_url: str, timeout_s: int = 12):
         self.rag_url = rag_url
         self.timeout_s = timeout_s
     
-    def query_topk(self, query: str, top_k: int = 3) -> List[RagEvidence]:
+    def query_topk(self, query: str, top_k: int = 3, max_chars: int = 260) -> List[RagEvidence]:
         # 1) POST top_k
-        payloads = [
-            {"query": query, "top_k": top_k},
-            {"query": query, "k": top_k},
-        ]
+        payload = {
+            "query": query,
+            "top_k": int(top_k),
+            # IMPORTANT: api_hybrid default include_text=False -> must request text
+            "include_text": True,
+            "max_chars": int(max_chars),
+            # keep defaults: mode="hybrid", etc.
+        }
         
-        last_err: Exception | None = None
-        for pl in payloads:
-            try:
-                r = requests.post(self.rag_url, json=pl, timeout=self.timeout_s)
-                if r.status_code >= 400:
-                    continue
-                return self._parse_any(r.json(), top_k=top_k)
-            except Exception as e:
-                last_err = e
-        
-        # 2) GET fallback
-        try:
-            r = requests.get(self.rag_url, params={"query": query, "top_k": top_k}, timeout=self.timeout_s)
-            if r.status_code < 400:
-                return self._parse_any(r.json(), top_k=top_k)
-        except Exception as e:
-            last_err = e
-        
-        if last_err:
-            raise last_err
-        return []
+        r = requests.post(self.rag_url, json=payload, timeout=self.timeout_s)
+        r.raise_for_status()
+        return self._parse_any(r.json(), top_k=top_k)
     
     def _parse_any(self, data: Any, top_k: int) -> List[RagEvidence]:
         """
-        Accept common shapes:
-        - {"contexts":[{"text":..., "source":..., "score":...}, ...]}
-        - {"sources":[{"content"/"text":..., ...}, ...]}
-        - {"documents":[...]}
-        - {"topk":[...]}
-        - {"results":[...]}
+        Accept shapes:
+        - local-rag-kit: {"chunks":[...]}  (primary)
+        - {"contexts"/"sources"/"documents"/"results"/"topk":[...]}
+        - ES-like hits
         - list[...] directly
         """
         candidates = None
@@ -72,7 +54,7 @@ class RagClient:
         if isinstance(data, list):
             candidates = data
         elif isinstance(data, dict):
-            for key in ("contexts", "sources", "documents", "topk", "results", "hits"):
+            for key in ("chunks", "contexts", "sources", "documents", "topk", "results", "hits"):
                 v = data.get(key)
                 if isinstance(v, list):
                     candidates = v
@@ -110,7 +92,7 @@ class RagClient:
 
         if isinstance(item, dict):
             snippet = item.get("text") or item.get("content") or item.get("chunk") or item.get("body") or item.get("snippet")
-            source = item.get("source") or item.get("file") or item.get("doc_id") or item.get("title")
+            source = item.get("doc") or item.get("source") or item.get("file") or item.get("doc_id") or item.get("title")
             score = item.get("score") or item.get("_score") or item.get("similarity")
             return RagEvidence(
                 snippet=str(snippet or ""),
