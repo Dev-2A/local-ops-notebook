@@ -35,6 +35,24 @@ Uninstall:
 schedule_uninstall.cmd
 ```
 
+## Build EXE (Windows)  
+```cmd
+build_exe.cmd
+```
+
+Output:
+- `dist/local-ops-notebook.exe`  
+
+## Scheduled Run (EXE)
+
+Install/Update scheduled task:
+```cmd
+schedule_install.cmd
+```
+
+Logs:
+- `logs/scheduled_exe_*.log`
+
 ## Optional RAG
 ```cmd
 set USE_RAG=1

@@ -4,3 +4,6 @@ __pycache__/
 .ops_state/
 logs/
 .DS_Store
+dist/
+build/
+*.spec

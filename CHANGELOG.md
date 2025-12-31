@@ -3,6 +3,15 @@ All notable changes to this project will be documented in this file.
 
 The format is based on Keep a Changelog, and this project follows Semantic Versioning.  
 
+## [0.2.3] - 2025-12-31
+### Added
+- One-file Windows EXE build via PyInstaller (`build_exe.cmd`)
+- Scheduled task runner switched to EXE (`scheduled_run_exe.cmd`)
+- PyInstaller data bundling for templates
+
+### Changed
+- Version bumped to 0.2.3  
+
 ## [0.2.2] - 2025-12-31  
 ### Added  
 - GitHub Actions CI (Windows runner): ruff + pytest  
