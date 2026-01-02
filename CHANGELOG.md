@@ -3,6 +3,14 @@ All notable changes to this project will be documented in this file.
 
 The format is based on Keep a Changelog, and this project follows Semantic Versioning.  
 
+## [0.3.3] - 2026-01-02
+### Added
+- `--doctor` health check (paths, permissions, optional RAG ping)
+- Scheduled EXE runner runs `--doctor` before generating report to fail fast with clear logs
+
+### Changed
+- Version bumped to 0.3.3  
+
 ## [0.3.2] - 2025-12-31
 ### Added
 - GitHub Actions release workflow: builds Windows onefile EXE via PyInstaller on tag push (`v*`)

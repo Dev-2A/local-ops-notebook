@@ -45,6 +45,8 @@ def main() -> int:
     parser.add_argument("--rag-top-k", type=int, default=None, help="RAG top-k override")
     parser.add_argument("--rag-query", default=None, help="Custom query override (optional)")
     parser.add_argument("--verbose", action="store_true", help="Verbose logging")
+    
+    parser.add_argument("--doctor", action="store_true", help="Run health check and exit")
 
     args = parser.parse_args()
 
@@ -95,6 +97,21 @@ def main() -> int:
         print(f"[INFO] state_path={state_path}")
         print(f"[INFO] report_path={report_path}")
         print(f"[INFO] use_rag={use_rag} rag_url={rag_url} top_k={rag_top_k}")
+    
+    if args.doctor:
+        from ops_notebook.core.doctor import run_doctor
+        
+        res = run_doctor(
+            notes_dir=notes_dir,
+            reports_dir=reports_dir,
+            template_path=template_path,
+            state_path=state_path,
+            use_rag=use_rag,
+            rag_url=rag_url,
+        )
+        print(res.summary)
+        print(res.details)
+        return 0 if res.ok else 2
 
     generate_weekly_report(
         notes_dir=notes_dir,
