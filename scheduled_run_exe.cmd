@@ -14,8 +14,14 @@ if not exist dist\local-ops-notebook.exe (
   exit /b 1
 )
 
-dist\local-ops-notebook.exe --config config.yaml >> "%LOG_FILE%" 2>&1
+REM Doctor first (quick health check)
+dist\local-ops-notebook.exe --config config.yaml --doctor >> "%LOG_FILE%" 2>&1
+if errorlevel 1 (
+  echo [ERROR] Doctor failed. Abort report generation. >> "%LOG_FILE%"
+  exit /b 1
+)
 
+dist\local-ops-notebook.exe --config config.yaml >> "%LOG_FILE%" 2>&1
 if errorlevel 1 (
   echo [ERROR] EXE report generation failed. >> "%LOG_FILE%"
   exit /b 1
